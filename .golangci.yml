@@ -1,3 +1,13 @@
+run:
+  timeout: 5m  # Обмеження часу на виконання всіх лінтерів
+  tests: true
+  concurrency: 4
+
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+
 linters:
   enable:
     - errcheck        # Перевіряє, чи оброблені всі помилки
@@ -20,17 +30,6 @@ linters:
     - typecheck
     - dupl
     - deadcode
-
-
-run:
-  timeout: 5m  # Обмеження часу на виконання всіх лінтерів
-  tests: true
-  concurrency: 4
-
-
-output:
-  format: colored-line-number
-  print-issued-lines: true
 
 
 issues:
