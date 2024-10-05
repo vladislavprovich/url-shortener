@@ -1,0 +1,53 @@
+run:
+  timeout: 5m  # Обмеження часу на виконання всіх лінтерів
+  tests: true
+  concurrency: 4
+
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+
+linters:
+  enable:
+    - errcheck        # Перевіряє, чи оброблені всі помилки
+    - gosimple        # Спрощує код Go
+    - govet           # Статичний аналіз коду
+    - ineffassign     # Виявляє неефективно присвоєні змінні
+    - staticcheck     # Комплексний аналіз статичних помилок
+    - structcheck     # Виявляє невикористовувані поля структур
+    - unused          # Виявляє невикористані змінні, функції та константи
+    - govet
+    - gofmt
+    - golint
+    - ineffassign
+    - gosec
+    - errcheck
+    - staticcheck
+    - unused
+    - structcheck
+    - varcheck
+    - typecheck
+    - dupl
+    - deadcode
+
+
+issues:
+  exclude-use-default: false
+  exclude:
+    - "SA1019"
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  severity:
+    default: warning
+    errcheck: error
+    govet: error
+
+linters-settings:
+  gofmt:
+    simplify: true
+  golint:
+    min-confidence: 0.8
+  gosec:
+    exclude-rules:
+      - G104
