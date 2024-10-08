@@ -20,4 +20,9 @@ type ShortenResponse struct {
 	ShortURL string `json:"short_url"`
 }
 
-// TODO add stats
+type StatsResponce struct {
+	RedirectCount int       `json:"redirect_count"`
+	CreatedAt     time.Time `json:"created_at"`
+	LasrAccessed  time.Time `json:"lasr_accessed"`
+	Referrers     []string  `json:"referrers,omitempty"`
+}
