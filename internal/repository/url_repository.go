@@ -8,8 +8,8 @@ import (
 type URLRepository interface {
 	SaveURL(url models.URL) error
 	GetURL(shortURL string) (models.URL, error)
-	// TODO redirect log
-	// stats
+	SaveRedirectLog(log models.RedirectLog) error
+	GetStats(shortURL string) (models.RedirectLog, error)
 }
 
 type urlRepository struct {
@@ -26,6 +26,16 @@ func (u urlRepository) SaveURL(url models.URL) error {
 }
 
 func (u urlRepository) GetURL(shortURL string) (models.URL, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u urlRepository) SaveRedirectLog(log models.RedirectLog) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u urlRepository) GetStats(shortURL string) (models.RedirectLog, error) {
 	//TODO implement me
 	panic("implement me")
 }

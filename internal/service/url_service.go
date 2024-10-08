@@ -8,8 +8,8 @@ import (
 type URLService interface {
 	CreateShortURL(req models.ShortenRequest) (string, error)
 	GetOriginalURL(shortURL string) (string, error)
-	// TODO redirect
-	// stats
+	LogRedirect(shortURL, referrer string) error
+	GetStats(shortURL string) (models.StatsResponce, error)
 }
 
 type urlService struct {
@@ -20,12 +20,22 @@ func NewURLService(repo repository.URLRepository) URLService {
 	return &urlService{repo: repo}
 }
 
-func (u urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
+func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u urlService) GetOriginalURL(shortURL string) (string, error) {
+func (s urlService) GetOriginalURL(shortURL string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s urlService) LogRedirect(shortURL, referrer string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s urlService) GetStats(shortURL string) (models.StatsResponce, error) {
 	//TODO implement me
 	panic("implement me")
 }
