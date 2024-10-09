@@ -6,7 +6,6 @@ import (
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/pkg/shortener"
-	"log"
 	"time"
 )
 
@@ -27,10 +26,10 @@ func NewURLService(repo repository.URLRepository) URLService {
 
 func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
 	short := shortener.GeneratorShortURL()
-	log.Println(short)
-	_, err := s.repo.GetURL(short)
+
+	err := s.repo.SaveURL(models.URL{ShortURL: short})
 	if err != nil {
-		return "", fmt.Errorf("short url already exists %s ", short)
+		return "", fmt.Errorf("create short url, get url err: %s ", err)
 	}
 	return short, nil
 }
@@ -47,10 +46,8 @@ func (s urlService) GetOriginalURL(shortURL string) (string, error) {
 
 func (s urlService) LogRedirect(shortURL, referrer string) error {
 
-	id := uuid.NewString()
-
 	logEntry := models.RedirectLog{
-		ID:         id,
+		ID:         uuid.NewString(),
 		ShortURL:   shortURL,
 		AccessedAt: time.Now(),
 		Referrer:   &referrer,
@@ -77,23 +74,10 @@ func (s urlService) GetStats(shortURL string) (models.StatsResponce, error) {
 
 	response := models.StatsResponce{
 		RedirectCount: 1,
-		CreatedAt:     status.AccessedAt,
+		CreatedAt:     status.AccessedAt, // TODO createdAt...
 		LasrAccessed:  status.AccessedAt,
 		Referrers:     referrers,
 	}
-
-	//var referrers []string
-	//// TODO maybe remove if...
-	//if status.Referrer != nil {
-	//	referrers = append(referrers, *status.Referrer)
-	//}
-	////------------------------
-	//response := models.StatsResponce{
-	//	RedirectCount: 1, // ?????
-	//	CreatedAt:     status.AccessedAt,
-	//	LasrAccessed:  status.AccessedAt,
-	//	Referrers:     referrers,
-	//}
 
 	return response, nil
 }
