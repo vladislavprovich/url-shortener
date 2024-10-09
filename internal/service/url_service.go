@@ -26,59 +26,41 @@ func NewURLService(repo repository.URLRepository) URLService {
 }
 
 func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
-	if req.URL == "" {
-		return "", fmt.Errorf("no long URL")
-	}
 	short := shortener.GeneratorShortURL()
 	log.Println(short)
 	_, err := s.repo.GetURL(short)
-	if err == nil {
-		return "", fmt.Errorf("short URL already exists")
+	if err != nil {
+		return "", fmt.Errorf("short url already exists %s ", short)
 	}
-
-	panic("implement me")
+	return short, nil
 }
 
 func (s urlService) GetOriginalURL(shortURL string) (string, error) {
-	if shortURL == "" {
-		return "", fmt.Errorf("no short URL")
-	}
+
 	originalUrl, err := s.repo.GetURL(shortURL)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("short url not found %s", shortURL)
 	}
-	log.Println(originalUrl)
-	panic("implement me")
+	return originalUrl.OriginalURL, nil
+
 }
 
 func (s urlService) LogRedirect(shortURL, referrer string) error {
-	if shortURL == "" {
-		return fmt.Errorf("no short URL")
-	}
-	//TODO referrer delete...
-	if referrer == "" {
-		return fmt.Errorf("no referrer")
-	}
 
-	res, err := s.repo.GetStats(shortURL)
-	if err != nil {
-		return err
-	}
-	log.Println(res)
-
-	var id = uuid.NewString()
+	id := uuid.NewString()
 
 	logEntry := models.RedirectLog{
 		ID:         id,
 		ShortURL:   shortURL,
-		Referrer:   &referrer,
 		AccessedAt: time.Now(),
+		Referrer:   &referrer,
 	}
-	err = s.repo.SaveRedirectLog(logEntry)
+
+	err := s.repo.SaveRedirectLog(logEntry)
 	if err != nil {
 		return fmt.Errorf("error saving redirect log: %w", err)
 	}
-	panic("implement me")
+
 	return nil
 }
 
@@ -87,8 +69,33 @@ func (s urlService) GetStats(shortURL string) (models.StatsResponce, error) {
 	if err != nil {
 		return models.StatsResponce{}, fmt.Errorf("error getting stats: %w", err)
 	}
-	log.Println(status)
-	panic("implement me")
+
+	var referrers []string
+	if status.Referrer != nil {
+		referrers = append(referrers, *status.Referrer)
+	}
+
+	response := models.StatsResponce{
+		RedirectCount: 1,
+		CreatedAt:     status.AccessedAt,
+		LasrAccessed:  status.AccessedAt,
+		Referrers:     referrers,
+	}
+
+	//var referrers []string
+	//// TODO maybe remove if...
+	//if status.Referrer != nil {
+	//	referrers = append(referrers, *status.Referrer)
+	//}
+	////------------------------
+	//response := models.StatsResponce{
+	//	RedirectCount: 1, // ?????
+	//	CreatedAt:     status.AccessedAt,
+	//	LasrAccessed:  status.AccessedAt,
+	//	Referrers:     referrers,
+	//}
+
+	return response, nil
 }
 
 // ShortenRequest -> http handler -> service -> repo db
