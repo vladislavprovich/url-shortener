@@ -6,7 +6,6 @@ import (
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/pkg/shortener"
-	"time"
 )
 
 type URLService interface {
@@ -25,24 +24,21 @@ func NewURLService(repo repository.URLRepository) URLService {
 }
 
 func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
-	short := shortener.GeneratorShortURL()
-	originalurl := req.URL
-	timeat := time.Now()
 
-	respons := models.URL{
+	response := models.URL{
 		ID:          uuid.NewString(),
-		OriginalURL: originalurl,
-		ShortURL:    short,
+		OriginalURL: req.URL,
+		ShortURL:    shortener.GeneratorShortURL(),
 		CustomAlias: req.CustomAlias,
-		CreatedAt:   timeat,  //maybe we will use
-		ExpiredAt:   &timeat, //the time in a different way
+		//CreatedAt:   timeat,  //maybe we will use
+		//ExpiredAt:   &timeat, //the time in a different way
 	}
 
-	err := s.repo.SaveURL(respons)
+	err := s.repo.SaveURL(response)
 	if err != nil {
 		return "", fmt.Errorf("create short url, get url err: %s ", err)
 	}
-	return short, nil
+	return shortener.GeneratorShortURL(), nil
 }
 
 func (s urlService) GetOriginalURL(shortURL string) (string, error) {
@@ -58,10 +54,10 @@ func (s urlService) GetOriginalURL(shortURL string) (string, error) {
 func (s urlService) LogRedirect(shortURL, referrer string) error {
 
 	logEntry := models.RedirectLog{
-		ID:         uuid.NewString(),
-		ShortURL:   shortURL,
-		AccessedAt: time.Now(),
-		Referrer:   &referrer,
+		ID:       uuid.NewString(),
+		ShortURL: shortURL,
+		//AccessedAt: time.Now(),
+		Referrer: &referrer,
 	}
 
 	err := s.repo.SaveRedirectLog(logEntry)
@@ -85,9 +81,9 @@ func (s urlService) GetStats(shortURL string) (models.StatsResponce, error) {
 
 	response := models.StatsResponce{
 		RedirectCount: 1,
-		CreatedAt:     status.AccessedAt, // TODO createdAt...
-		LasrAccessed:  status.AccessedAt,
-		Referrers:     referrers,
+		//CreatedAt:     status.AccessedAt, // TODO createdAt...
+		//LasrAccessed:  status.AccessedAt,
+		Referrers: referrers,
 	}
 
 	return response, nil
