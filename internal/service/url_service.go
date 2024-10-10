@@ -26,8 +26,19 @@ func NewURLService(repo repository.URLRepository) URLService {
 
 func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
 	short := shortener.GeneratorShortURL()
+	originalurl := req.URL
+	timeat := time.Now()
 
-	err := s.repo.SaveURL(models.URL{ShortURL: short})
+	respons := models.URL{
+		ID:          uuid.NewString(),
+		OriginalURL: originalurl,
+		ShortURL:    short,
+		CustomAlias: req.CustomAlias,
+		CreatedAt:   timeat,  //maybe we will use
+		ExpiredAt:   &timeat, //the time in a different way
+	}
+
+	err := s.repo.SaveURL(respons)
 	if err != nil {
 		return "", fmt.Errorf("create short url, get url err: %s ", err)
 	}
