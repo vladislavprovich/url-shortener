@@ -1,19 +1,22 @@
 package service
 
 import (
+	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/pkg/shortener"
-	"time"
 )
 
 type URLService interface {
 	CreateShortURL(req models.ShortenRequest) (string, error)
 	GetOriginalURL(shortURL string) (string, error)
 	LogRedirect(shortURL, referrer string) error
-	GetStats(shortURL string) (models.StatsResponce, error)
+	GetStats(shortURL string) (models.StatsResponse, error)
 }
 
 type urlService struct {
@@ -24,70 +27,76 @@ func NewURLService(repo repository.URLRepository) URLService {
 	return &urlService{repo: repo}
 }
 
-func (s urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
+func (s *urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
+	var shortURL string
+	if req.CustomAlias != nil && *req.CustomAlias != "" {
+		// Check if Custom Alias is unique
+		_, err := s.repo.GetURL(*req.CustomAlias)
+		if err == nil {
+			return "", errors.New("custom alias already in use")
+		}
 
-	response := models.URL{
-		ID:          uuid.NewString(),
+		shortURL = *req.CustomAlias
+	} else {
+		// Generate unique short URL
+		for {
+			shortURL = shortener.GeneratorShortURL()
+			_, err := s.repo.GetURL(shortURL)
+			if err != nil {
+				if strings.Contains(err.Error(), "URL not found") {
+					break
+				}
+
+				return "", err
+			}
+		}
+	}
+
+	url := models.URL{
+		ID:          uuid.New().String(),
 		OriginalURL: req.URL,
-		ShortURL:    shortener.GeneratorShortURL(),
+		ShortURL:    shortURL,
 		CustomAlias: req.CustomAlias,
 		CreatedAt:   time.Now(),
 	}
 
-	err := s.repo.SaveURL(response)
+	err := s.repo.SaveURL(url)
 	if err != nil {
 		return "", fmt.Errorf("create short url, get url err: %s ", err)
 	}
-	return shortener.GeneratorShortURL(), nil
+
+	return url.ShortURL, nil
 }
 
-func (s urlService) GetOriginalURL(shortURL string) (string, error) {
-
+func (s *urlService) GetOriginalURL(shortURL string) (string, error) {
 	originalUrl, err := s.repo.GetURL(shortURL)
 	if err != nil {
 		return "", fmt.Errorf("get short url, get url err:, %s", err)
 	}
-	return originalUrl.OriginalURL, nil
+	// Check if URL has expired
+	if originalUrl.ExpiredAt != nil && time.Now().After(*originalUrl.ExpiredAt) {
+		return "", errors.New("URL has expired")
+	}
 
+	return originalUrl.OriginalURL, nil
 }
 
-func (s urlService) LogRedirect(shortURL, referrer string) error {
+func (s *urlService) LogRedirect(shortURL, referrer string) error {
+	var referrerPtr *string
+	if referrer != "" {
+		referrerPtr = &referrer
+	}
 
-	logEntry := models.RedirectLog{
-		ID:         uuid.NewString(),
+	log := models.RedirectLog{
+		ID:         uuid.New().String(),
 		ShortURL:   shortURL,
 		AccessedAt: time.Now(),
-		Referrer:   &referrer,
+		Referrer:   referrerPtr,
 	}
 
-	err := s.repo.SaveRedirectLog(logEntry)
-	if err != nil {
-		return fmt.Errorf("error saving redirect log: %w", err)
-	}
-
-	return nil
+	return s.repo.SaveRedirectLog(log)
 }
 
-func (s urlService) GetStats(shortURL string) (models.StatsResponce, error) {
-	status, err := s.repo.GetStats(shortURL)
-	if err != nil {
-		return models.StatsResponce{}, fmt.Errorf("error getting stats: %w", err)
-	}
-
-	var referrers []string
-	if status.Referrer != nil {
-		referrers = append(referrers, *status.Referrer)
-	}
-
-	response := models.StatsResponce{
-		RedirectCount: 1,
-		CreatedAt:     status.AccessedAt, // TODO createdAt...
-		LasrAccessed:  status.AccessedAt,
-		Referrers:     referrers,
-	}
-
-	return response, nil
+func (s *urlService) GetStats(shortURL string) (models.StatsResponse, error) {
+	return s.repo.GetStats(shortURL)
 }
-
-// ShortenRequest -> http handler -> service -> repo db
-// repo db -> service -> http handler -> response

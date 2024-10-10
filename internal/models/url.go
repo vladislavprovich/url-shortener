@@ -20,9 +20,9 @@ type ShortenResponse struct {
 	ShortURL string `json:"short_url"`
 }
 
-type StatsResponce struct {
-	RedirectCount int       `json:"redirect_count"`
-	CreatedAt     time.Time `json:"created_at"`
-	LasrAccessed  time.Time `json:"lasr_accessed"`
-	Referrers     []string  `json:"referrers,omitempty"`
+type StatsResponse struct {
+	RedirectCount int        `json:"redirect_count"`
+	CreatedAt     time.Time  `json:"created_at"`
+	LastAccessed  *time.Time `json:"last_accessed,omitempty"`
+	Referrers     []string   `json:"referrers,omitempty"`
 }
