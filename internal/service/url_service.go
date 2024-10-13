@@ -53,7 +53,7 @@ func (s *urlService) CreateShortURL(req models.ShortenRequest) (string, error) {
 	}
 
 	url := models.URL{
-		ID:          uuid.New().String(),
+		ID:          uuid.New().String(), //uuid.NewString() ???
 		OriginalURL: req.URL,
 		ShortURL:    shortURL,
 		CustomAlias: req.CustomAlias,
