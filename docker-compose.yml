@@ -22,7 +22,7 @@ services:
     volumes:
       # first my local dir, second default for everyone
       - D:/Base/Downloads/example_db:/var/lib/postgresql/data
-      - db-data:/var/lib/postgresql/data
+      #- db-data:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
