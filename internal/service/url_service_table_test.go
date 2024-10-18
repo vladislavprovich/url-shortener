@@ -140,7 +140,6 @@ func TestCreateShortURL_Table(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			// TODO have error ,The code you are testing needs to make 1 more call(s)
 			name:          "CreateShortURL_RepositoryErrorOnCheck",
 			customAlias:   &shortURL,
 			reqURL:        "https://example.com",
