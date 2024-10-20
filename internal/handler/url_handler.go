@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/internal/service"
@@ -45,12 +46,14 @@ func InitDB(connStr string) (*sql.DB, error) {
 func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	var req models.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// TODO add logger
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	// Validate Request
 	if err := validator.Validate(req); err != nil {
+		// TODO add logger
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -58,6 +61,7 @@ func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Create Short URL
 	shortURL, err := h.service.CreateShortURL(req)
 	if err != nil {
+		// TODO add logger
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -79,6 +83,7 @@ func (h *URLHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
 	originalURL, err := h.service.GetOriginalURL(shortURL)
 	if err != nil {
+		// TODO add logger
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
@@ -94,6 +99,7 @@ func (h *URLHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "shortURL")
 	stats, err := h.service.GetStats(shortURL)
 	if err != nil {
+		// TODO add logger
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}

@@ -13,9 +13,11 @@ import (
 )
 
 func main() {
+	// TODO move to separate func
 	// Initialize Logger
 	logger := logger.NewLogger(os.Getenv("LOG_LEVEL"))
 
+	// TODO move to separate func
 	// Connect to Database
 	db, err := handler.InitDB(os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -27,7 +29,10 @@ func main() {
 	r := chi.NewRouter()
 
 	// Apply Middlewares
+	r.Use(middleware.Recoverer(logger))
 	r.Use(middleware.RequestLogger(logger))
+	r.Use(middleware.CORS)
+	r.Use(middleware.RateLimiter)
 
 	// Initialize Handlers
 	urlHandler := handler.NewURLHandler(db, logger)
