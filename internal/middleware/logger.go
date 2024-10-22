@@ -13,11 +13,20 @@ func RequestLogger(logger *zap.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			next.ServeHTTP(w, r)
 			duration := time.Since(start)
-			logger.Info("Request",
+			logger.Info("HTTP Request",
 				zap.String("method", r.Method),
 				zap.String("url", r.URL.String()),
+				zap.Int("status", getStatusCode(w)),
 				zap.Duration("duration", duration),
 			)
 		})
 	}
+}
+
+// Helper function to get status code from ResponseWriter
+func getStatusCode(w http.ResponseWriter) int {
+	if rw, ok := w.(interface{ Status() int }); ok {
+		return rw.Status()
+	}
+	return http.StatusOK
 }
