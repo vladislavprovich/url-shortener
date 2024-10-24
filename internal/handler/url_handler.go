@@ -47,8 +47,12 @@ func InitDB(connStr string) (*sql.DB, error) {
 
 func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handler.ShortenURL called")
+	h.logger.Debug("handler.ShortenURL called")
 	var req models.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		h.logger.Debug("handler, failed to decode request body", zap.Error(err))
+
 		h.logger.Error("handler, failed to decode request body", zap.Error(err))
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -87,26 +91,34 @@ func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *URLHandler) Redirect(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("handler.Redirect called")
 	shortURL := chi.URLParam(r, "shortURL")
 	originalURL, err := h.service.GetOriginalURL(r.Context(), shortURL)
 	if err != nil {
-		// TODO add logger
+		h.logger.Error("handler, failed to get original URL", zap.Error(err))
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
 
 	// Log the redirect
 	referrer := r.Referer()
-	h.service.LogRedirect(r.Context(), shortURL, referrer)
-
+	h.logger.Info("handler, referrer ", zap.String("referrer", referrer))
+	err2 := h.service.LogRedirect(r.Context(), shortURL, referrer)
+	if err2 != nil {
+		h.logger.Error("handler, failed to redirect", zap.Error(err2))
+		http.Error(w, "LogRedirect error", http.StatusNotFound)
+		return
+	}
+	h.logger.Info("handler, redirect successfully")
 	http.Redirect(w, r, originalURL, http.StatusFound)
 }
 
 func (h *URLHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("handler.GetStats called")
 	shortURL := chi.URLParam(r, "shortURL")
 	stats, err := h.service.GetStats(r.Context(), shortURL)
 	if err != nil {
-		// TODO add logger
+		h.logger.Error("handler, failed to get stats", zap.Error(err))
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
