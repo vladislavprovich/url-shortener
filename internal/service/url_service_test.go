@@ -36,7 +36,7 @@ func (m *MockURLRepository) GetStats(ctx context.Context, shortURL string) (mode
 
 func TestSaveURL_ValidURL_CustomAlies_Found(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	customAlias := "userurl"
@@ -67,7 +67,7 @@ func TestSaveURL_ValidURL_CustomAlies_Found(t *testing.T) {
 
 func TestSaveURL_ValidURL_CustomAlies(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	customAlias := "userurl"
@@ -90,7 +90,7 @@ func TestSaveURL_ValidURL_CustomAlies(t *testing.T) {
 
 func TestSaveURL_ValidURL_NoCustomAlies(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -110,7 +110,7 @@ func TestSaveURL_ValidURL_NoCustomAlies(t *testing.T) {
 
 func TestGetURL(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	castomalias := "http://myurl123"
@@ -131,7 +131,7 @@ func TestGetURL(t *testing.T) {
 
 func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -152,7 +152,7 @@ func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 
 func TestCreateShortURL_ValidURL_WithUniqueCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	customAlias := "uniquealias"
@@ -175,7 +175,7 @@ func TestCreateShortURL_ValidURL_WithUniqueCustomAlias(t *testing.T) {
 
 func TestCreateShortURL_ValidURL_WithExistingCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	customAlias := "existingalias"
@@ -205,7 +205,7 @@ func TestCreateShortURL_InvalidURLFormat(t *testing.T) {
 	// However, we can simulate the service handling an invalid URL if validation was missed.
 
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -230,7 +230,7 @@ func TestCreateShortURL_InvalidURLFormat(t *testing.T) {
 
 func TestCreateShortURL_RepositoryErrorOnCheck(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -250,7 +250,7 @@ func TestCreateShortURL_RepositoryErrorOnCheck(t *testing.T) {
 
 func TestCreateShortURL_RepositoryErrorOnSave(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -276,7 +276,7 @@ func TestCreateShortURL_RepositoryErrorOnSave(t *testing.T) {
 
 func TestGetOriginalURL_ExistingShortURL(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "abc123"
@@ -297,7 +297,7 @@ func TestGetOriginalURL_ExistingShortURL(t *testing.T) {
 
 func TestGetOriginalURL_NonExistingShortURL(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "nonexistent"
@@ -319,7 +319,7 @@ func TestGetOriginalURL_NonExistingShortURL(t *testing.T) {
 
 func TestGetOriginalURL_ExpiredURL(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "expired123"
@@ -341,7 +341,7 @@ func TestGetOriginalURL_ExpiredURL(t *testing.T) {
 
 func TestGetOriginalURL_RepositoryError(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "abc123"
@@ -362,7 +362,7 @@ func TestGetOriginalURL_RepositoryError(t *testing.T) {
 
 func TestLogRedirect(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "abc123"
@@ -374,7 +374,7 @@ func TestLogRedirect(t *testing.T) {
 
 func TestGetStats(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo)
+	service := NewURLService(mockRepo, nil)
 	ctx := context.Background()
 
 	shortURL := "abc123"

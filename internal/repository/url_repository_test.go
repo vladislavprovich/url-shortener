@@ -31,7 +31,7 @@ func TestSaveURL(t *testing.T) {
 		WithArgs(url.ID, url.OriginalURL, url.ShortURL, url.CustomAlias, url.CreatedAt, url.ExpiredAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.SaveURL(url)
+	err = repo.SaveURL(nil, url)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -59,7 +59,7 @@ func TestGetURL(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "original_url", "short_url", "custom_alias", "created_at", "expires_at"}).
 			AddRow(url.ID, url.OriginalURL, url.ShortURL, url.CustomAlias, url.CreatedAt, url.ExpiredAt))
 
-	result, err := repo.GetURL(shortURL)
+	result, err := repo.GetURL(nil, shortURL)
 	assert.NoError(t, err)
 	assert.Equal(t, url, result)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -86,7 +86,7 @@ func TestSaveRedirectLog(t *testing.T) {
 		WithArgs(logEntry.ID, logEntry.ShortURL, logEntry.AccessedAt, logEntry.Referrer).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.SaveRedirectLog(logEntry)
+	err = repo.SaveRedirectLog(nil, logEntry)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -131,7 +131,7 @@ func TestGetStats(t *testing.T) {
 		WithArgs(shortURL).
 		WillReturnRows(rows)
 
-	stats, err := repo.GetStats(shortURL)
+	stats, err := repo.GetStats(nil, shortURL)
 	assert.NoError(t, err)
 	assert.Equal(t, redirectCount, stats.RedirectCount)
 	assert.Equal(t, createdAt, stats.CreatedAt)

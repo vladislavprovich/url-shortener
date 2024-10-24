@@ -83,34 +83,53 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 }
 
 func (s *urlService) GetOriginalURL(ctx context.Context, shortURL string) (string, error) {
+	s.logger.Info("service.GetOriginalURL", zap.String("short_url", shortURL))
 	originalUrl, err := s.repo.GetURL(ctx, shortURL)
 	if err != nil {
+		s.logger.Info("service, failed to get original URL", zap.String("short_url", shortURL))
 		return "", fmt.Errorf("get short url, get url err:, %s", err)
 	}
 	// Check if URL has expired
 	if originalUrl.ExpiredAt != nil && time.Now().After(*originalUrl.ExpiredAt) {
+		s.logger.Info("storage time has expired, URL has expired", zap.String("short_url", shortURL))
 		return "", errors.New("URL has expired")
 	}
-
+	s.logger.Info("service, origin URL retrieved successfully", zap.String("original_url", originalUrl.OriginalURL))
 	return originalUrl.OriginalURL, nil
 }
 
 func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string) error {
+	s.logger.Info("service.LogRedirect", zap.String("short_url", shortURL), zap.String("referrer", referrer))
 	var referrerPtr *string
 	if referrer != "" {
+		s.logger.Info("referrer is nil, ", zap.String("referrerPtr", *referrerPtr))
 		referrerPtr = &referrer
+	} else {
+		s.logger.Info("Referrer is empty, not assigning to referrerPtr")
 	}
-
+	s.logger.Info("Saving RedirectLog to repository", zap.String("short_url", shortURL), zap.Time("accessed_at", time.Now()))
 	log := models.RedirectLog{
 		ID:         uuid.New().String(),
 		ShortURL:   shortURL,
 		AccessedAt: time.Now(),
 		Referrer:   referrerPtr,
 	}
+	err := s.repo.SaveRedirectLog(ctx, log)
+	if err != nil {
+		s.logger.Error("Error saving RedirectLog", zap.String("log_id", log.ID), zap.Error(err))
+		return err
+	}
 
 	return s.repo.SaveRedirectLog(ctx, log)
 }
 
 func (s *urlService) GetStats(ctx context.Context, shortURL string) (models.StatsResponse, error) {
-	return s.repo.GetStats(ctx, shortURL)
+	s.logger.Info("service GetStatus", zap.String("shortURL", shortURL))
+
+	status, err := s.repo.GetStats(ctx, shortURL)
+	if err != nil {
+		s.logger.Info("Error getting stats", zap.Error(err))
+		return models.StatsResponse{}, err
+	}
+	return status, nil
 }

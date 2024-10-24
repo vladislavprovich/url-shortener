@@ -55,7 +55,7 @@ func TestSaveURL_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockURLRepository)
-			service := NewURLService(mockRepo)
+			service := NewURLService(mockRepo, nil)
 
 			req := models.ShortenRequest{
 				URL:         tt.reqURL,
@@ -70,7 +70,7 @@ func TestSaveURL_Table(t *testing.T) {
 
 			mockRepo.On("SaveURL", mock.AnythingOfType("models.URL")).Return(tt.saveURLError).Once()
 
-			url, err := service.CreateShortURL(req)
+			url, err := service.CreateShortURL(nil, req)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -173,7 +173,7 @@ func TestCreateShortURL_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockURLRepository)
-			service := NewURLService(mockRepo)
+			service := NewURLService(mockRepo, nil)
 
 			req := models.ShortenRequest{
 				URL:         tt.reqURL,
@@ -188,7 +188,7 @@ func TestCreateShortURL_Table(t *testing.T) {
 
 			mockRepo.On("SaveURL", mock.Anything).Return(tt.saveURLError).Once()
 
-			url, err := service.CreateShortURL(req)
+			url, err := service.CreateShortURL(nil, req)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -253,11 +253,11 @@ func TestGetOriginalURL_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockURLRepository)
-			service := NewURLService(mockRepo)
+			service := NewURLService(mockRepo, nil)
 
 			mockRepo.On("GetURL", short).Return(tt.existingURL, tt.getURLError).Once()
 
-			url, err := service.GetOriginalURL(short)
+			url, err := service.GetOriginalURL(nil, short)
 
 			if tt.expectError {
 				assert.Error(t, err)

@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"github.com/vladislavprovich/url-shortener/internal/repository"
+	"github.com/vladislavprovich/url-shortener/internal/service"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,32 +19,27 @@ import (
 	"go.uber.org/zap"
 )
 
+var log *zap.Logger
+var db *sql.DB
+var repo *repository.URLRepository
+
 func main() {
 	// TODO move to separate func
 	// Initialize Logger
-	logger := logger.NewLogger(os.Getenv("LOG_LEVEL"))
-
 	// TODO move to separate func
 	// Connect to Database
-	db, err := handler.InitDB(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer db.Close()
-
 	// Create Router
 	r := chi.NewRouter()
 
 	// Apply Middlewares
-	r.Use(middleware.Recoverer(logger))
-	r.Use(middleware.RequestLogger(logger))
+	r.Use(middleware.Recoverer(log))
+	r.Use(middleware.RequestLogger(log))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
 
 	// TODO repository and service must init here together with urlHandler
 	// Initialize Handlers
-	urlHandler := handler.NewURLHandler(db, logger)
-
+	urlHandler := handler.NewURLHandler(db, log)
 	// Routes
 	r.Post("/shorten", urlHandler.ShortenURL)
 	r.Get("/{shortURL}", urlHandler.Redirect)
@@ -61,15 +60,15 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Info("Server is starting", zap.String("port", serverPort))
+		log.Info("Server is starting", zap.String("port", serverPort))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("Server error", zap.Error(err))
+			log.Fatal("Server error", zap.Error(err))
 		}
 	}()
 
 	// Block until a signal is received
 	<-quit
-	logger.Info("Server is shutting down...")
+	log.Info("Server is shutting down...")
 
 	// Create a context with timeout for the shutdown process
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -77,8 +76,41 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := srv.Shutdown(ctx); err != nil {
-		logger.Fatal("Server forced to shutdown", zap.Error(err))
+		log.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 
-	logger.Info("Server exited gracefully")
+	log.Info("Server exited gracefully")
+}
+
+func initLoger() {
+	// Initialize Logger
+	log := logger.NewLogger(os.Getenv("LOG_LEVEL"))
+	if log == nil {
+		log.Fatal("Failed to initialize logger")
+	}
+
+}
+
+func initDataBase() {
+	// Connect to Database
+	db, err := handler.InitDB(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect to database", zap.Error(err))
+	}
+	defer db.Close()
+}
+
+func initRepo() {
+	repo := repository.NewURLRepository(db)
+	fmt.Println(repo)
+}
+
+func initService() {
+	service := service.NewURLService(*repo, log)
+	fmt.Println(service)
+}
+
+func initHandler() {
+	urlHandler := handler.NewURLHandler(db, log)
+	fmt.Println(urlHandler)
 }
