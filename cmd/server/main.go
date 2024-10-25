@@ -20,8 +20,7 @@ import (
 )
 
 func main() {
-	// TODO move to separate func
-	// Initialize Logger
+	// Initialize
 	logger := initLoger()
 	db := initDB()
 	defer func() {
@@ -32,13 +31,10 @@ func main() {
 
 	}()
 
-	//todo fix error
 	repo := initRepo(db)
 	service := initService(&repo, logger)
 	urlHandler := initHandler(service, logger)
 
-	// TODO move to separate func
-	// Connect to Database
 	// Create Router
 	r := chi.NewRouter()
 
@@ -47,9 +43,6 @@ func main() {
 	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
-
-	// TODO repository and service must init here together with urlHandler
-	// Initialize Handlers
 
 	// Routes
 	r.Post("/shorten", urlHandler.ShortenURL)
@@ -94,13 +87,11 @@ func main() {
 }
 
 func initLoger() *zap.Logger {
-	// Initialize Logger
 	return logger.NewLogger(os.Getenv("LOG_LEVEL"))
 
 }
 
 func initDB() *sql.DB {
-	//Connect to Database
 	db, err := repository.InitDB(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Failed to connect to database", zap.Error(err))

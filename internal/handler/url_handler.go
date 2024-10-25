@@ -19,15 +19,12 @@ type URLHandler struct {
 	logger  *zap.Logger
 }
 
-// TODO repository and service must init in main
 func NewURLHandler(srv service.URLService, logger *zap.Logger) *URLHandler {
 	return &URLHandler{
 		service: srv,
 		logger:  logger,
 	}
 }
-
-// TODO must be in storage layer new fail
 
 func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handler.ShortenURL called")
