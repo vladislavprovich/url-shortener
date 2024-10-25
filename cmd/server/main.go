@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"github.com/vladislavprovich/url-shortener/internal/repository"
+	"github.com/vladislavprovich/url-shortener/internal/service"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,17 +20,20 @@ import (
 )
 
 func main() {
-	// TODO move to separate func
-	// Initialize Logger
-	logger := logger.NewLogger(os.Getenv("LOG_LEVEL"))
+	// Initialize
+	logger := initLoger()
+	db := initDB()
+	defer func() {
 
-	// TODO move to separate func
-	// Connect to Database
-	db, err := handler.InitDB(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer db.Close()
+		if err := db.Close(); err != nil {
+			logger.Warn("Error closing db", zap.Error(err))
+		}
+
+	}()
+
+	repo := initRepo(db)
+	service := initService(&repo, logger)
+	urlHandler := initHandler(service, logger)
 
 	// Create Router
 	r := chi.NewRouter()
@@ -36,10 +43,6 @@ func main() {
 	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
-
-	// TODO repository and service must init here together with urlHandler
-	// Initialize Handlers
-	urlHandler := handler.NewURLHandler(db, logger)
 
 	// Routes
 	r.Post("/shorten", urlHandler.ShortenURL)
@@ -81,4 +84,30 @@ func main() {
 	}
 
 	logger.Info("Server exited gracefully")
+}
+
+func initLoger() *zap.Logger {
+	return logger.NewLogger(os.Getenv("LOG_LEVEL"))
+
+}
+
+func initDB() *sql.DB {
+	db, err := repository.InitDB(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal("Failed to connect to database", zap.Error(err))
+	}
+	return db
+}
+
+func initRepo(db *sql.DB) repository.URLRepository {
+	return repository.NewURLRepository(db)
+}
+
+func initService(repo *repository.URLRepository, logger *zap.Logger) service.URLService {
+	return service.NewURLService(*repo, logger)
+
+}
+
+func initHandler(srv service.URLService, logger *zap.Logger) *handler.URLHandler {
+	return handler.NewURLHandler(srv, logger)
 }
