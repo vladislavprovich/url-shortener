@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/internal/service"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,27 +19,38 @@ import (
 	"go.uber.org/zap"
 )
 
-var log *zap.Logger
-var db *sql.DB
-var repo *repository.URLRepository
-
 func main() {
 	// TODO move to separate func
 	// Initialize Logger
+	logger := initLoger()
+	db := initDB()
+	defer func() {
+
+		if err := db.Close(); err != nil {
+			logger.Warn("Error closing db", zap.Error(err))
+		}
+
+	}()
+
+	//todo fix error
+	repo := initRepo(db)
+	service := initService(&repo, logger)
+	urlHandler := initHandler(service, logger)
+
 	// TODO move to separate func
 	// Connect to Database
 	// Create Router
 	r := chi.NewRouter()
 
 	// Apply Middlewares
-	r.Use(middleware.Recoverer(log))
-	r.Use(middleware.RequestLogger(log))
+	r.Use(middleware.Recoverer(logger))
+	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
 
 	// TODO repository and service must init here together with urlHandler
 	// Initialize Handlers
-	urlHandler := handler.NewURLHandler(db, log)
+
 	// Routes
 	r.Post("/shorten", urlHandler.ShortenURL)
 	r.Get("/{shortURL}", urlHandler.Redirect)
@@ -60,15 +71,15 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Info("Server is starting", zap.String("port", serverPort))
+		logger.Info("Server is starting", zap.String("port", serverPort))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Server error", zap.Error(err))
+			logger.Fatal("Server error", zap.Error(err))
 		}
 	}()
 
 	// Block until a signal is received
 	<-quit
-	log.Info("Server is shutting down...")
+	logger.Info("Server is shutting down...")
 
 	// Create a context with timeout for the shutdown process
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -76,41 +87,36 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown", zap.Error(err))
+		logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 
-	log.Info("Server exited gracefully")
+	logger.Info("Server exited gracefully")
 }
 
-func initLoger() {
+func initLoger() *zap.Logger {
 	// Initialize Logger
-	log := logger.NewLogger(os.Getenv("LOG_LEVEL"))
-	if log == nil {
-		log.Fatal("Failed to initialize logger")
-	}
+	return logger.NewLogger(os.Getenv("LOG_LEVEL"))
 
 }
 
-func initDataBase() {
-	// Connect to Database
-	db, err := handler.InitDB(os.Getenv("DATABASE_URL"))
+func initDB() *sql.DB {
+	//Connect to Database
+	db, err := repository.InitDB(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("Failed to connect to database", zap.Error(err))
 	}
-	defer db.Close()
+	return db
 }
 
-func initRepo() {
-	repo := repository.NewURLRepository(db)
-	fmt.Println(repo)
+func initRepo(db *sql.DB) repository.URLRepository {
+	return repository.NewURLRepository(db)
 }
 
-func initService() {
-	service := service.NewURLService(*repo, log)
-	fmt.Println(service)
+func initService(repo *repository.URLRepository, logger *zap.Logger) service.URLService {
+	return service.NewURLService(*repo, logger)
+
 }
 
-func initHandler() {
-	urlHandler := handler.NewURLHandler(db, log)
-	fmt.Println(urlHandler)
+func initHandler(srv service.URLService, logger *zap.Logger) *handler.URLHandler {
+	return handler.NewURLHandler(srv, logger)
 }

@@ -91,7 +91,7 @@ func (s *urlService) GetOriginalURL(ctx context.Context, shortURL string) (strin
 	}
 	// Check if URL has expired
 	if originalUrl.ExpiredAt != nil && time.Now().After(*originalUrl.ExpiredAt) {
-		s.logger.Info("storage time has expired, URL has expired", zap.String("short_url", shortURL))
+		s.logger.Info("service, storage time has expired, URL has expired", zap.String("short_url", shortURL))
 		return "", errors.New("URL has expired")
 	}
 	s.logger.Info("service, origin URL retrieved successfully", zap.String("original_url", originalUrl.OriginalURL))

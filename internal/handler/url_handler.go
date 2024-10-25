@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
 	"github.com/vladislavprovich/url-shortener/internal/models"
-	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 	"github.com/vladislavprovich/url-shortener/internal/validator"
 	"go.uber.org/zap"
@@ -22,36 +20,20 @@ type URLHandler struct {
 }
 
 // TODO repository and service must init in main
-func NewURLHandler(db *sql.DB, logger *zap.Logger) *URLHandler {
-	repo := repository.NewURLRepository(db)
-	service := service.NewURLService(repo, logger)
+func NewURLHandler(srv service.URLService, logger *zap.Logger) *URLHandler {
 	return &URLHandler{
-		service: service,
+		service: srv,
 		logger:  logger,
 	}
 }
 
-// TODO must be in storage layer
-func InitDB(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-	// Verify connection
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
+// TODO must be in storage layer new fail
 
 func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handler.ShortenURL called")
-	h.logger.Debug("handler.ShortenURL called")
+
 	var req models.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-
-		h.logger.Debug("handler, failed to decode request body", zap.Error(err))
 
 		h.logger.Error("handler, failed to decode request body", zap.Error(err))
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -85,7 +67,7 @@ func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handler, short URL created", zap.String("short_url", response.ShortURL))
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err = json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error("handler, failed to write response", zap.Error(err))
 	}
 }
@@ -103,9 +85,9 @@ func (h *URLHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	// Log the redirect
 	referrer := r.Referer()
 	h.logger.Info("handler, referrer ", zap.String("referrer", referrer))
-	err2 := h.service.LogRedirect(r.Context(), shortURL, referrer)
-	if err2 != nil {
-		h.logger.Error("handler, failed to redirect", zap.Error(err2))
+	err = h.service.LogRedirect(r.Context(), shortURL, referrer)
+	if err != nil {
+		h.logger.Error("handler, failed to redirect", zap.Error(err))
 		http.Error(w, "LogRedirect error", http.StatusNotFound)
 		return
 	}
