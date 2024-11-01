@@ -19,9 +19,9 @@ type URLHandler struct {
 	logger  *zap.Logger
 }
 
-func NewURLHandler(serv service.URLService, logger *zap.Logger) *URLHandler {
+func NewURLHandler(srv service.URLService, logger *zap.Logger) *URLHandler {
 	return &URLHandler{
-		service: serv,
+		service: srv,
 		logger:  logger,
 	}
 }
@@ -87,7 +87,7 @@ func (h *URLHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the redirect //todo fix this code
+	// Log the redirect
 
 	referrer := r.Referer()
 	h.logger.Info("handler, referrer ", zap.String("referrer", referrer))

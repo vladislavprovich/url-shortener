@@ -27,32 +27,26 @@ func main() {
 	defer func() {
 
 		if err := db.Close(); err != nil {
-
+			logger.Warn("Error closing db", zap.Error(err))
 		}
 	}()
 	repo := initRepo(db)
 	service := initService(&repo, logger)
 	urlHandler := initHandler(service, logger)
 
-	logger.Debug("main, db initialized", zap.Any("db", db), zap.Any("repo", repo))
-	logger.Debug("main, logger initialized", zap.Any("logger", logger))
-	logger.Debug("main, repo initialized", zap.Any("repo", repo))
-	logger.Debug("main, service initialized", zap.Any("service", service))
-	logger.Debug("main, URL handler initialized", zap.Any("URL_handler", urlHandler))
-
 	// Create Router
 	r := chi.NewRouter()
-	r.Use(chiMiddleware.Logger)
 	// Apply Middlewares
-	r.Use(middleware.Recoverer(logger)) // is working
+	r.Use(chiMiddleware.Logger)
+	r.Use(middleware.Recoverer(logger))
 	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
 
 	// Routes
-	r.Post("/shorten", urlHandler.ShortenURL)       // is working
-	r.Get("/{shortURL}", urlHandler.Redirect)       // is working
-	r.Get("/{shortURL}/stats", urlHandler.GetStats) // is working
+	r.Post("/shorten", urlHandler.ShortenURL)
+	r.Get("/{shortURL}", urlHandler.Redirect)
+	r.Get("/{shortURL}/stats", urlHandler.GetStats)
 
 	// Start Server Graceful Shutdown
 	serverPort := os.Getenv("SERVER_PORT")
@@ -113,6 +107,6 @@ func initService(repo *repository.URLRepository, logger *zap.Logger) service.URL
 	return service.NewURLService(*repo, logger)
 }
 
-func initHandler(serv service.URLService, logger *zap.Logger) *handler.URLHandler {
-	return handler.NewURLHandler(serv, logger)
+func initHandler(srv service.URLService, logger *zap.Logger) *handler.URLHandler {
+	return handler.NewURLHandler(srv, logger)
 }
