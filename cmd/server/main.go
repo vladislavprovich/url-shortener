@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/vladislavprovich/url-shortener/internal/middleware"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 	"log"
@@ -14,46 +16,51 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/vladislavprovich/url-shortener/internal/handler"
-	"github.com/vladislavprovich/url-shortener/internal/middleware"
 	"github.com/vladislavprovich/url-shortener/pkg/logger"
 	"go.uber.org/zap"
 )
 
 func main() {
 	// Initialize
-	logger := initLoger()
+	logger := initLogger()
 	db := initDB()
 	defer func() {
 
 		if err := db.Close(); err != nil {
-			logger.Warn("Error closing db", zap.Error(err))
+
 		}
-
 	}()
-
 	repo := initRepo(db)
 	service := initService(&repo, logger)
 	urlHandler := initHandler(service, logger)
 
+	logger.Debug("main, db initialized", zap.Any("db", db), zap.Any("repo", repo))
+	logger.Debug("main, logger initialized", zap.Any("logger", logger))
+	logger.Debug("main, repo initialized", zap.Any("repo", repo))
+	logger.Debug("main, service initialized", zap.Any("service", service))
+	logger.Debug("main, URL handler initialized", zap.Any("URL_handler", urlHandler))
+
 	// Create Router
 	r := chi.NewRouter()
-
+	r.Use(chiMiddleware.Logger)
 	// Apply Middlewares
-	r.Use(middleware.Recoverer(logger))
+	r.Use(middleware.Recoverer(logger)) // is working
 	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
 	r.Use(middleware.RateLimiter)
 
 	// Routes
-	r.Post("/shorten", urlHandler.ShortenURL)
-	r.Get("/{shortURL}", urlHandler.Redirect)
-	r.Get("/{shortURL}/stats", urlHandler.GetStats)
+	r.Post("/shorten", urlHandler.ShortenURL)       // is working
+	r.Get("/{shortURL}", urlHandler.Redirect)       // is working
+	r.Get("/{shortURL}/stats", urlHandler.GetStats) // is working
 
 	// Start Server Graceful Shutdown
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080"
+		logger.Debug("setting server port", zap.String("port", serverPort))
 	}
+
 	srv := &http.Server{
 		Addr:    ":" + serverPort,
 		Handler: r,
@@ -86,9 +93,8 @@ func main() {
 	logger.Info("Server exited gracefully")
 }
 
-func initLoger() *zap.Logger {
+func initLogger() *zap.Logger {
 	return logger.NewLogger(os.Getenv("LOG_LEVEL"))
-
 }
 
 func initDB() *sql.DB {
@@ -105,9 +111,8 @@ func initRepo(db *sql.DB) repository.URLRepository {
 
 func initService(repo *repository.URLRepository, logger *zap.Logger) service.URLService {
 	return service.NewURLService(*repo, logger)
-
 }
 
-func initHandler(srv service.URLService, logger *zap.Logger) *handler.URLHandler {
-	return handler.NewURLHandler(srv, logger)
+func initHandler(serv service.URLService, logger *zap.Logger) *handler.URLHandler {
+	return handler.NewURLHandler(serv, logger)
 }

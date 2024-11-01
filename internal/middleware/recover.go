@@ -14,6 +14,8 @@ func Recoverer(logger *zap.Logger) func(handler http.Handler) http.Handler {
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				}
 			}()
+			//send request next method
+			next.ServeHTTP(w, r)
 		})
 	}
 }

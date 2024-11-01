@@ -35,6 +35,7 @@ func NewURLService(repo repository.URLRepository, logger *zap.Logger) URLService
 
 func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenRequest) (string, error) {
 	s.logger.Info("service.CreateShortURL", zap.String("original_url", req.URL))
+	s.logger.Debug("service, request url", zap.String("req_original_url", req.URL))
 
 	var shortURL string
 	if req.CustomAlias != nil && *req.CustomAlias != "" {
@@ -47,11 +48,14 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 		}
 
 		shortURL = *req.CustomAlias
+		s.logger.Debug("service, create custom alias or init", zap.String("custom_alias", *req.CustomAlias))
+		s.logger.Debug("service, creating new URL", zap.String("", *req.CustomAlias))
 	} else {
 		s.logger.Info("service, generating unique short URL")
 		// Generate unique short URL
 		for {
 			shortURL = shortener.GeneratorShortURL()
+			s.logger.Debug("Short URL generated", zap.String("short_url", shortURL))
 			_, err := s.repo.GetURL(ctx, shortURL)
 			if err != nil {
 				if strings.Contains(err.Error(), "URL not found") {
@@ -72,6 +76,8 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 		CreatedAt:   time.Now(),
 	}
 
+	s.logger.Debug("info URL model", zap.Any("url", url))
+
 	err := s.repo.SaveURL(ctx, url)
 	if err != nil {
 		s.logger.Error("service, failed to save URL", zap.Error(err))
@@ -79,12 +85,15 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 	}
 
 	s.logger.Info("service, short URL created successfully", zap.String("short_url", shortURL))
+	s.logger.Debug("service short URL created CALLED", zap.String("short_url", shortURL))
 	return url.ShortURL, nil
 }
 
 func (s *urlService) GetOriginalURL(ctx context.Context, shortURL string) (string, error) {
 	s.logger.Info("service.GetOriginalURL", zap.String("short_url", shortURL))
 	originalUrl, err := s.repo.GetURL(ctx, shortURL)
+	s.logger.Debug("service.GetOriginURL short URL ", zap.String("short_url", shortURL))
+	s.logger.Debug("service.GetOriginURL originalURL ", zap.Any("original_url", originalUrl))
 	if err != nil {
 		s.logger.Info("service, failed to get original URL", zap.String("short_url", shortURL))
 		return "", fmt.Errorf("get short url, get url err:, %s", err)
@@ -102,8 +111,8 @@ func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string)
 	s.logger.Info("service.LogRedirect", zap.String("short_url", shortURL), zap.String("referrer", referrer))
 	var referrerPtr *string
 	if referrer != "" {
-		s.logger.Info("referrer is nil, ", zap.String("referrerPtr", *referrerPtr))
 		referrerPtr = &referrer
+		s.logger.Info("referrer is nil, ", zap.String("referrerPtr", *referrerPtr))
 	} else {
 		s.logger.Info("Referrer is empty, not assigning to referrerPtr")
 	}
@@ -120,7 +129,7 @@ func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string)
 		return err
 	}
 
-	return s.repo.SaveRedirectLog(ctx, log)
+	return nil
 }
 
 func (s *urlService) GetStats(ctx context.Context, shortURL string) (models.StatsResponse, error) {

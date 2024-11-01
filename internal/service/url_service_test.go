@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"testing"
 	"time"
 
@@ -36,7 +37,9 @@ func (m *MockURLRepository) GetStats(ctx context.Context, shortURL string) (mode
 
 func TestSaveURL_ValidURL_CustomAlies_Found(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo, nil)
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
 	customAlias := "userurl"
@@ -90,7 +93,9 @@ func TestSaveURL_ValidURL_CustomAlies(t *testing.T) {
 
 func TestSaveURL_ValidURL_NoCustomAlies(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo, nil)
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -131,7 +136,9 @@ func TestGetURL(t *testing.T) {
 
 func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo, nil)
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
 	req := models.ShortenRequest{
@@ -152,7 +159,9 @@ func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 
 func TestCreateShortURL_ValidURL_WithUniqueCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
-	service := NewURLService(mockRepo, nil)
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
 	customAlias := "uniquealias"
