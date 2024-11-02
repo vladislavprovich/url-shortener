@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type URL struct {
 	ID          string     `json:"id"`
@@ -13,7 +15,7 @@ type URL struct {
 
 type ShortenRequest struct {
 	URL         string  `json:"url" validate:"required,url"`
-	CustomAlias *string `json:"custom_alias,omitempty" validate:"omitempty,alpharum"`
+	CustomAlias *string `json:"custom_alias,omitempty" validate:"omitempty,alphanum"`
 }
 
 type ShortenResponse struct {

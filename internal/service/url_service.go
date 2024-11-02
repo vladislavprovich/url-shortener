@@ -39,7 +39,6 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 	var shortURL string
 	if req.CustomAlias != nil && *req.CustomAlias != "" {
 		s.logger.Info("service, custom alias provided", zap.String("custom_alias", *req.CustomAlias))
-		// Check if Custom Alias is unique
 		_, err := s.repo.GetURL(ctx, *req.CustomAlias)
 		if err == nil {
 			s.logger.Warn("service, custom alias already in use", zap.String("custom_alias", *req.CustomAlias))
@@ -49,7 +48,6 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 		shortURL = *req.CustomAlias
 	} else {
 		s.logger.Info("service, generating unique short URL")
-		// Generate unique short URL
 		for {
 			shortURL = shortener.GeneratorShortURL()
 			_, err := s.repo.GetURL(ctx, shortURL)
@@ -65,7 +63,7 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 	}
 
 	url := models.URL{
-		ID:          uuid.New().String(), //uuid.NewString() ???
+		ID:          uuid.New().String(),
 		OriginalURL: req.URL,
 		ShortURL:    shortURL,
 		CustomAlias: req.CustomAlias,
@@ -89,7 +87,7 @@ func (s *urlService) GetOriginalURL(ctx context.Context, shortURL string) (strin
 		s.logger.Info("service, failed to get original URL", zap.String("short_url", shortURL))
 		return "", fmt.Errorf("get short url, get url err:, %s", err)
 	}
-	// Check if URL has expired
+
 	if originalUrl.ExpiredAt != nil && time.Now().After(*originalUrl.ExpiredAt) {
 		s.logger.Info("service, storage time has expired, URL has expired", zap.String("short_url", shortURL))
 		return "", errors.New("URL has expired")
@@ -102,8 +100,8 @@ func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string)
 	s.logger.Info("service.LogRedirect", zap.String("short_url", shortURL), zap.String("referrer", referrer))
 	var referrerPtr *string
 	if referrer != "" {
-		s.logger.Info("referrer is nil, ", zap.String("referrerPtr", *referrerPtr))
 		referrerPtr = &referrer
+		s.logger.Info("referrer is nil, ", zap.String("referrerPtr", *referrerPtr))
 	} else {
 		s.logger.Info("Referrer is empty, not assigning to referrerPtr")
 	}
@@ -120,7 +118,7 @@ func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string)
 		return err
 	}
 
-	return s.repo.SaveRedirectLog(ctx, log)
+	return nil
 }
 
 func (s *urlService) GetStats(ctx context.Context, shortURL string) (models.StatsResponse, error) {

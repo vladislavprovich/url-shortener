@@ -10,7 +10,11 @@ func NewLogger(level string) *zap.Logger {
 	} else {
 		cfg = zap.NewDevelopmentConfig()
 	}
-	logger, _ := cfg.Build()
+	logger, err := cfg.Build()
+
+	if err != nil {
+		panic(err)
+	}
 
 	return logger
 }

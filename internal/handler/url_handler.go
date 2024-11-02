@@ -28,23 +28,19 @@ func NewURLHandler(srv service.URLService, logger *zap.Logger) *URLHandler {
 
 func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handler.ShortenURL called")
-
 	var req models.ShortenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-
 		h.logger.Error("handler, failed to decode request body", zap.Error(err))
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Validate Request
 	if err := validator.Validate(req); err != nil {
 		h.logger.Warn("handler, validation failed", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Create Short URL
 	shortURL, err := h.service.CreateShortURL(r.Context(), req)
 	if err != nil {
 		h.logger.Error("handler, failed to create short URL", zap.Error(err))
@@ -56,7 +52,6 @@ func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv("BASE_URL") != "" {
 		baseURL = os.Getenv("BASE_URL")
 	}
-
 	response := models.ShortenResponse{
 		ShortURL: fmt.Sprintf("%s/%s", baseURL, shortURL),
 	}
@@ -79,7 +74,6 @@ func (h *URLHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the redirect
 	referrer := r.Referer()
 	h.logger.Info("handler, referrer ", zap.String("referrer", referrer))
 	err = h.service.LogRedirect(r.Context(), shortURL, referrer)
