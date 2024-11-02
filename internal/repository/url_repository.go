@@ -60,7 +60,6 @@ func (repo *urlRepository) SaveRedirectLog(ctx context.Context, log models.Redir
 func (repo *urlRepository) GetStats(ctx context.Context, shortURL string) (models.StatsResponse, error) {
 	var stats models.StatsResponse
 
-	// Get URL Creation Time
 	query := `
         SELECT created_at FROM urls WHERE short_url = $1 OR custom_alias = $1
     `
@@ -73,7 +72,6 @@ func (repo *urlRepository) GetStats(ctx context.Context, shortURL string) (model
 		return stats, err
 	}
 
-	// Get Redirect Logs
 	query = `
         SELECT COUNT(*), MAX(accessed_at) FROM redirect_logs WHERE short_url = $1
     `
@@ -87,7 +85,6 @@ func (repo *urlRepository) GetStats(ctx context.Context, shortURL string) (model
 		stats.LastAccessed = &lastAccessed.Time
 	}
 
-	// Get Referrers
 	query = `
         SELECT DISTINCT referrer FROM redirect_logs WHERE short_url = $1 AND referrer IS NOT NULL
     `

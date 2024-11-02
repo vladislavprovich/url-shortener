@@ -10,7 +10,6 @@ func InitDB(connStr string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Verify connection
 	err = db.Ping()
 	if err != nil {
 		return nil, err
