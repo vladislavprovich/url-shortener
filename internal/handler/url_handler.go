@@ -3,26 +3,26 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 	"github.com/vladislavprovich/url-shortener/internal/validator"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 type URLHandler struct {
 	service service.URLService
 	logger  *zap.Logger
+	config  Config
 }
 
-func NewURLHandler(srv service.URLService, logger *zap.Logger) *URLHandler {
+func NewURLHandler(srv service.URLService, logger *zap.Logger, cfg Config) *URLHandler {
 	return &URLHandler{
 		service: srv,
 		logger:  logger,
+		config:  cfg,
 	}
 }
 
@@ -48,12 +48,8 @@ func (h *URLHandler) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := r.Host
-	if os.Getenv("BASE_URL") != "" {
-		baseURL = os.Getenv("BASE_URL")
-	}
 	response := models.ShortenResponse{
-		ShortURL: fmt.Sprintf("%s/%s", baseURL, shortURL),
+		ShortURL: fmt.Sprintf("%s/%s", h.config.BaseURL, shortURL),
 	}
 
 	h.logger.Info("handler, short URL created", zap.String("short_url", response.ShortURL))
