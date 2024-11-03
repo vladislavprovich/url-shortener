@@ -6,6 +6,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/vladislavprovich/url-shortener/internal/middleware"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
+	"github.com/vladislavprovich/url-shortener/internal/repository/postgres"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 	"log"
 	"net/http"
@@ -21,8 +22,19 @@ import (
 )
 
 func main() {
-	logger := initLogger()
-	db := initDB()
+	ctx := context.Background()
+
+	// Load Configuration
+	cfg, err := LoadConfig(ctx)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	logger := initLogger(cfg.Logger.Level)
+	db, err := postgres.PrepareConnection(ctx, cfg.Database, logger)
+	if err != nil {
+		logger.Fatal("Failed to connect to database", zap.Error(err))
+	}
 	defer func() {
 
 		if err := db.Close(); err != nil {
@@ -31,34 +43,32 @@ func main() {
 	}()
 	repo := initRepo(db)
 	service := initService(&repo, logger)
-	urlHandler := initHandler(service, logger)
+	urlHandler := initHandler(service, logger, cfg.Server)
 
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 	r.Use(middleware.Recoverer(logger))
 	r.Use(middleware.RequestLogger(logger))
 	r.Use(middleware.CORS)
-	r.Use(middleware.RateLimiter)
+	r.Use(middleware.RateLimiter(cfg.Server.RateLimit))
 
 	r.Post("/shorten", urlHandler.ShortenURL)
 	r.Get("/{shortURL}", urlHandler.Redirect)
 	r.Get("/{shortURL}/stats", urlHandler.GetStats)
 
-	serverPort := os.Getenv("SERVER_PORT")
-	if serverPort == "" {
-		serverPort = "8080"
-	}
-
 	srv := &http.Server{
-		Addr:    ":" + serverPort,
-		Handler: r,
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      r,
+		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Info("Server is starting", zap.String("port", serverPort))
+		logger.Info("Server is starting", zap.String("port", cfg.Server.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server error", zap.Error(err))
 		}
@@ -77,16 +87,8 @@ func main() {
 	logger.Info("Server exited gracefully")
 }
 
-func initLogger() *zap.Logger {
-	return logger.NewLogger(os.Getenv("LOG_LEVEL"))
-}
-
-func initDB() *sql.DB {
-	db, err := repository.InitDB(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	return db
+func initLogger(logLevel string) *zap.Logger {
+	return logger.NewLogger(logLevel)
 }
 
 func initRepo(db *sql.DB) repository.URLRepository {
@@ -97,6 +99,6 @@ func initService(repo *repository.URLRepository, logger *zap.Logger) service.URL
 	return service.NewURLService(*repo, logger)
 }
 
-func initHandler(srv service.URLService, logger *zap.Logger) *handler.URLHandler {
-	return handler.NewURLHandler(srv, logger)
+func initHandler(srv service.URLService, logger *zap.Logger, cfg handler.Config) *handler.URLHandler {
+	return handler.NewURLHandler(srv, logger, cfg)
 }

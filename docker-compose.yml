@@ -10,6 +10,7 @@ services:
       - SERVER_PORT=8080
       - LOG_LEVEL=development
       - RATE_LIMIT=100
+      - BASE_URL=http://localhost:8080
     depends_on:
       - db
 
