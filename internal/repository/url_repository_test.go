@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"context"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -12,8 +15,12 @@ import (
 
 func TestSaveURL(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	require.NoError(t, err)
+	defer func() {
+		if err = db.Close(); err != nil {
+			t.Errorf("error closing db: %v", err)
+		}
+	}()
 
 	repo := NewURLRepository(db)
 
@@ -31,15 +38,19 @@ func TestSaveURL(t *testing.T) {
 		WithArgs(url.ID, url.OriginalURL, url.ShortURL, url.CustomAlias, url.CreatedAt, url.ExpiredAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.SaveURL(nil, url)
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	err = repo.SaveURL(context.TODO(), url)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetURL(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	require.NoError(t, err)
+	defer func() {
+		if err = db.Close(); err != nil {
+			t.Errorf("error closing db: %v", err)
+		}
+	}()
 
 	repo := NewURLRepository(db)
 
@@ -59,16 +70,20 @@ func TestGetURL(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "original_url", "short_url", "custom_alias", "created_at", "expires_at"}).
 			AddRow(url.ID, url.OriginalURL, url.ShortURL, url.CustomAlias, url.CreatedAt, url.ExpiredAt))
 
-	result, err := repo.GetURL(nil, shortURL)
-	assert.NoError(t, err)
+	result, err := repo.GetURL(context.TODO(), shortURL)
+	require.NoError(t, err)
 	assert.Equal(t, url, result)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestSaveRedirectLog(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	require.NoError(t, err)
+	defer func() {
+		if err = db.Close(); err != nil {
+			t.Errorf("error closing db: %v", err)
+		}
+	}()
 
 	repo := NewURLRepository(db)
 
@@ -86,15 +101,19 @@ func TestSaveRedirectLog(t *testing.T) {
 		WithArgs(logEntry.ID, logEntry.ShortURL, logEntry.AccessedAt, logEntry.Referrer).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.SaveRedirectLog(nil, logEntry)
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	err = repo.SaveRedirectLog(context.TODO(), logEntry)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetStats(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	require.NoError(t, err)
+	defer func() {
+		if err = db.Close(); err != nil {
+			t.Errorf("error closing db: %v", err)
+		}
+	}()
 
 	repo := NewURLRepository(db)
 
@@ -131,11 +150,11 @@ func TestGetStats(t *testing.T) {
 		WithArgs(shortURL).
 		WillReturnRows(rows)
 
-	stats, err := repo.GetStats(nil, shortURL)
-	assert.NoError(t, err)
+	stats, err := repo.GetStats(context.TODO(), shortURL)
+	require.NoError(t, err)
 	assert.Equal(t, redirectCount, stats.RedirectCount)
 	assert.Equal(t, createdAt, stats.CreatedAt)
 	assert.Equal(t, &lastAccessed, stats.LastAccessed)
 	assert.Equal(t, referrers, stats.Referrers)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	require.NoError(t, mock.ExpectationsWereMet())
 }

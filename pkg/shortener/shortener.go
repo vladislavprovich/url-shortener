@@ -6,7 +6,10 @@ import (
 )
 
 func GeneratorShortURL() string {
-	b := make([]byte, 6)
-	rand.Read(b)
+	cap_len := 6
+	b := make([]byte, cap_len)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
 	return base64.URLEncoding.EncodeToString(b)
 }

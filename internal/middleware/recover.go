@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"go.uber.org/zap"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 func Recoverer(logger *zap.Logger) func(handler http.Handler) http.Handler {

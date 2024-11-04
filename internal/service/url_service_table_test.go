@@ -1,12 +1,16 @@
 package service
 
 import (
+	"context"
 	"errors"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/vladislavprovich/url-shortener/internal/models"
-	"testing"
-	"time"
 )
 
 func TestSaveURL_Table(t *testing.T) {
@@ -70,14 +74,14 @@ func TestSaveURL_Table(t *testing.T) {
 
 			mockRepo.On("SaveURL", mock.AnythingOfType("models.URL")).Return(tt.saveURLError).Once()
 
-			url, err := service.CreateShortURL(nil, req)
+			url, err := service.CreateShortURL(context.TODO(), req)
 
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
 				assert.Empty(t, url)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotEmpty(t, url)
 			}
 
@@ -188,19 +192,17 @@ func TestCreateShortURL_Table(t *testing.T) {
 
 			mockRepo.On("SaveURL", mock.Anything).Return(tt.saveURLError).Once()
 
-			url, err := service.CreateShortURL(nil, req)
+			url, err := service.CreateShortURL(context.TODO(), req)
 
 			if tt.expectError {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
 				assert.Empty(t, url)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotEmpty(t, url)
 			}
-
 			mockRepo.AssertExpectations(t)
-
 		})
 	}
 }
@@ -257,20 +259,17 @@ func TestGetOriginalURL_Table(t *testing.T) {
 
 			mockRepo.On("GetURL", short).Return(tt.existingURL, tt.getURLError).Once()
 
-			url, err := service.GetOriginalURL(nil, short)
+			url, err := service.GetOriginalURL(context.TODO(), short)
 
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
 				assert.Empty(t, url)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotEmpty(t, url)
 			}
-
 			mockRepo.AssertExpectations(t)
 		})
-
 	}
-
 }

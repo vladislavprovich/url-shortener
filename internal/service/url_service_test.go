@@ -3,9 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"go.uber.org/zap"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,21 +19,21 @@ type MockURLRepository struct {
 	mock.Mock
 }
 
-// created two mock method for save and ger url address
-func (m *MockURLRepository) SaveURL(ctx context.Context, url models.URL) error {
+// created two mock method for save and ger url address.
+func (m *MockURLRepository) SaveURL(_ context.Context, url models.URL) error {
 	args := m.Called(url)
 	return args.Error(0)
 }
 
-func (m *MockURLRepository) GetURL(ctx context.Context, shortURL string) (models.URL, error) {
+func (m *MockURLRepository) GetURL(_ context.Context, shortURL string) (models.URL, error) {
 	args := m.Called(shortURL)
 	return args.Get(0).(models.URL), args.Error(1)
 }
-func (m *MockURLRepository) SaveRedirectLog(ctx context.Context, log models.RedirectLog) error {
+func (m *MockURLRepository) SaveRedirectLog(_ context.Context, log models.RedirectLog) error {
 	args := m.Called(log)
 	return args.Error(0)
 }
-func (m *MockURLRepository) GetStats(ctx context.Context, shortURL string) (models.StatsResponse, error) {
+func (m *MockURLRepository) GetStats(_ context.Context, shortURL string) (models.StatsResponse, error) {
 	args := m.Called(shortURL)
 	return args.Get(0).(models.StatsResponse), args.Error(1)
 }
@@ -38,7 +41,12 @@ func (m *MockURLRepository) GetStats(ctx context.Context, shortURL string) (mode
 func TestSaveURL_ValidURL_CustomAlies_Found(t *testing.T) {
 	mockRepo := new(MockURLRepository)
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Warn("Error logger Sync", zap.Error(err))
+		}
+	}()
 	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
@@ -59,13 +67,12 @@ func TestSaveURL_ValidURL_CustomAlies_Found(t *testing.T) {
 	mockRepo.On("SaveURL", ctx, mock.AnythingOfType("models.URL")).Return(errors.New("save error")).Once()
 	url, err := service.CreateShortURL(ctx, req)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "save error")
 
 	assert.Empty(t, url)
 	mockRepo.AssertExpectations(t)
-
 }
 
 func TestSaveURL_ValidURL_CustomAlies(t *testing.T) {
@@ -85,16 +92,20 @@ func TestSaveURL_ValidURL_CustomAlies(t *testing.T) {
 	mockRepo.On("SaveURL", mock.AnythingOfType("models.URL")).Return(nil).Once()
 	url, err := service.CreateShortURL(ctx, req)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, url)
 	mockRepo.AssertExpectations(t)
-
 }
 
 func TestSaveURL_ValidURL_NoCustomAlies(t *testing.T) {
 	mockRepo := new(MockURLRepository)
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Warn("Error logger Sync", zap.Error(err))
+		}
+	}()
 	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
@@ -107,10 +118,9 @@ func TestSaveURL_ValidURL_NoCustomAlies(t *testing.T) {
 	mockRepo.On("SaveURL", mock.Anything).Return(nil).Once()
 
 	url, err := service.CreateShortURL(ctx, req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, url)
 	mockRepo.AssertExpectations(t)
-
 }
 
 func TestGetURL(t *testing.T) {
@@ -130,14 +140,19 @@ func TestGetURL(t *testing.T) {
 	}
 	mockRepo.On("GetURL", shortURL).Return(testurl, nil)
 	result, err := service.GetOriginalURL(ctx, shortURL)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, testurl.OriginalURL, result)
 }
 
 func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Warn("Error logger Sync", zap.Error(err))
+		}
+	}()
 	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
@@ -145,14 +160,14 @@ func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 		URL: "https://example.com",
 	}
 
-	// Simulate that the generated short URL does not exist in the repository
+	// Simulate that the generated short URL does not exist in the repository.
 	mockRepo.On("GetURL", mock.Anything).Return(models.URL{}, errors.New("URL not found")).Once()
-	// Simulate successful save
+	// Simulate successful save.
 	mockRepo.On("SaveURL", mock.Anything).Return(nil).Once()
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotEmpty(t, shortURL)
 	mockRepo.AssertExpectations(t)
 }
@@ -160,7 +175,12 @@ func TestCreateShortURL_ValidURL_NoCustomAlias(t *testing.T) {
 func TestCreateShortURL_ValidURL_WithUniqueCustomAlias(t *testing.T) {
 	mockRepo := new(MockURLRepository)
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Warn("Error logger Sync", zap.Error(err))
+		}
+	}()
 	service := NewURLService(mockRepo, logger)
 	ctx := context.Background()
 
@@ -170,14 +190,14 @@ func TestCreateShortURL_ValidURL_WithUniqueCustomAlias(t *testing.T) {
 		CustomAlias: &customAlias,
 	}
 
-	// Simulate that the custom alias does not exist in the repository
+	// Simulate that the custom alias does not exist in the repository.
 	mockRepo.On("GetURL", customAlias).Return(models.URL{}, errors.New("URL not found")).Once()
-	// Simulate successful save
+	// Simulate successful save.
 	mockRepo.On("SaveURL", mock.Anything).Return(nil).Once()
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, customAlias, shortURL)
 	mockRepo.AssertExpectations(t)
 }
@@ -193,7 +213,7 @@ func TestCreateShortURL_ValidURL_WithExistingCustomAlias(t *testing.T) {
 		CustomAlias: &customAlias,
 	}
 
-	// Simulate that the custom alias already exists in the repository
+	// Simulate that the custom alias already exists in the repository.
 	existingURL := models.URL{
 		ShortURL:    customAlias,
 		OriginalURL: "https://other.com",
@@ -202,14 +222,14 @@ func TestCreateShortURL_ValidURL_WithExistingCustomAlias(t *testing.T) {
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "custom alias already in use")
+	require.Error(t, err)
+	require.EqualError(t, err, "custom alias already in use")
 	assert.Empty(t, shortURL)
 	mockRepo.AssertExpectations(t)
 }
 
 func TestCreateShortURL_InvalidURLFormat(t *testing.T) {
-	// Since URL validation is handled by the validator, and the service expects valid input,
+	// Since URL validation is handled by the validator, and the service expects valid input.
 	// this test would normally be in the handler or validator tests.
 	// However, we can simulate the service handling an invalid URL if validation was missed.
 
@@ -224,15 +244,15 @@ func TestCreateShortURL_InvalidURLFormat(t *testing.T) {
 	// The service does not validate the URL format; it's expected to be valid.
 	// So we simulate the normal flow, but perhaps the repository returns an error.
 
-	// Simulate that the generated short URL does not exist in the repository
+	// Simulate that the generated short URL does not exist in the repository.
 	mockRepo.On("GetURL", mock.Anything).Return(models.URL{}, errors.New("URL not found")).Once()
-	// Simulate successful save
+	// Simulate successful save.
 	mockRepo.On("SaveURL", mock.Anything).Return(nil).Once()
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	// Since the service does not validate the URL, it will proceed as normal
-	assert.NoError(t, err)
+	// Since the service does not validate the URL, it will proceed as normal.
+	require.NoError(t, err)
 	assert.NotEmpty(t, shortURL)
 	mockRepo.AssertExpectations(t)
 }
@@ -246,13 +266,13 @@ func TestCreateShortURL_RepositoryErrorOnCheck(t *testing.T) {
 		URL: "https://example.com",
 	}
 
-	// Simulate an error when checking for existing short URL
+	// Simulate an error when checking for existing short URL.
 	mockRepo.On("GetURL", mock.Anything).Return(models.URL{}, errors.New("database error")).Once()
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "database error")
+	require.Error(t, err)
+	require.EqualError(t, err, "database error")
 	assert.Empty(t, shortURL)
 	mockRepo.AssertExpectations(t)
 }
@@ -266,17 +286,17 @@ func TestCreateShortURL_RepositoryErrorOnSave(t *testing.T) {
 		URL: "https://example.com",
 	}
 
-	// Simulate that the generated short URL does not exist
+	// Simulate that the generated short URL does not exist.
 	mockRepo.On("GetURL", mock.Anything).Return(models.URL{}, errors.New("URL not found")).Once()
-	// Simulate an error when saving the URL
+	// Simulate an error when saving the URL.
 	mockRepo.On("SaveURL", mock.Anything).Return(errors.New("save error")).Once()
 
 	shortURL, err := service.CreateShortURL(ctx, req)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 
-	//fixed
-	// use contains
+	// fixed.
+	// use contains.
 	assert.Contains(t, err.Error(), "save error")
 
 	assert.Empty(t, shortURL)
@@ -291,7 +311,7 @@ func TestGetOriginalURL_ExistingShortURL(t *testing.T) {
 	shortURL := "abc123"
 	originalURL := "https://example.com"
 
-	// Simulate that the short URL exists
+	// Simulate that the short URL exists.
 	mockRepo.On("GetURL", shortURL).Return(models.URL{
 		OriginalURL: originalURL,
 		ExpiredAt:   nil,
@@ -299,7 +319,7 @@ func TestGetOriginalURL_ExistingShortURL(t *testing.T) {
 
 	url, err := service.GetOriginalURL(ctx, shortURL)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, originalURL, url)
 	mockRepo.AssertExpectations(t)
 }
@@ -311,15 +331,15 @@ func TestGetOriginalURL_NonExistingShortURL(t *testing.T) {
 
 	shortURL := "nonexistent"
 
-	// Simulate that the short URL does not exist
+	// Simulate that the short URL does not exist.
 	mockRepo.On("GetURL", shortURL).Return(models.URL{}, errors.New("URL not found")).Once()
 
 	url, err := service.GetOriginalURL(ctx, shortURL)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 
-	// fixed
-	//assert.EqualError(t, err, "get short url, get url err:, URL not found")
+	// fixed.
+	// assert.EqualError(t, err, "get short url, get url err:, URL not found").
 	assert.Contains(t, err.Error(), "URL not found")
 
 	assert.Empty(t, url)
@@ -332,9 +352,9 @@ func TestGetOriginalURL_ExpiredURL(t *testing.T) {
 	ctx := context.Background()
 
 	shortURL := "expired123"
-	expiresAt := time.Now().Add(-time.Hour) // URL expired an hour ago
+	expiresAt := time.Now().Add(-time.Hour) // URL expired an hour ago.
 
-	// Simulate that the short URL exists but has expired
+	// Simulate that the short URL exists but has expired.
 	mockRepo.On("GetURL", shortURL).Return(models.URL{
 		OriginalURL: "https://example.com",
 		ExpiredAt:   &expiresAt,
@@ -342,8 +362,8 @@ func TestGetOriginalURL_ExpiredURL(t *testing.T) {
 
 	url, err := service.GetOriginalURL(ctx, shortURL)
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "URL has expired")
+	require.Error(t, err)
+	require.EqualError(t, err, "URL has expired")
 	assert.Empty(t, url)
 	mockRepo.AssertExpectations(t)
 }
@@ -355,16 +375,16 @@ func TestGetOriginalURL_RepositoryError(t *testing.T) {
 
 	shortURL := "abc123"
 
-	// Simulate a repository error
+	// Simulate a repository error.
 	mockRepo.On("GetURL", shortURL).Return(models.URL{}, errors.New("database error")).Once()
 
 	url, err := service.GetOriginalURL(ctx, shortURL)
-	assert.Error(t, err)
+	require.Error(t, err)
 
-	assert.EqualError(t, err, "get short url, get url err:, database error")
-	// error have "database error" text
+	require.EqualError(t, err, "get short url, get url err:, database error")
+	// error have "database error" text.
 	assert.Contains(t, err.Error(), "database error")
-	//checks that the url is empty
+	// checks that the url is empty.
 	assert.Empty(t, url)
 	mockRepo.AssertExpectations(t)
 }
@@ -378,7 +398,7 @@ func TestLogRedirect(t *testing.T) {
 	referrer := "https://referrer.com"
 	mockRepo.On("SaveRedirectLog", mock.Anything).Return(nil)
 	err := service.LogRedirect(ctx, shortURL, referrer)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestGetStats(t *testing.T) {
@@ -395,6 +415,6 @@ func TestGetStats(t *testing.T) {
 	}
 	mockRepo.On("GetStats", shortURL).Return(stats, nil)
 	result, err := service.GetStats(ctx, shortURL)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, stats, result)
 }

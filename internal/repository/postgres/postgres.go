@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func PrepareConnection(ctx context.Context, config Config, logger *zap.Logger) (*sql.DB, error) {
@@ -27,12 +28,12 @@ func PrepareConnection(ctx context.Context, config Config, logger *zap.Logger) (
 	ctxPing, cancelPing := context.WithTimeout(ctx, 5*time.Second)
 	defer cancelPing()
 
-	if err := db.PingContext(ctxPing); err != nil {
+	if err = db.PingContext(ctxPing); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	// Initialize Database
-	if err := ensureTables(ctx, db, config, logger); err != nil {
+	if err = ensureTables(ctx, db, config, logger); err != nil {
 		return nil, fmt.Errorf("ensure tables: %w", err)
 	}
 
