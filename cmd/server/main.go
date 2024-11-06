@@ -10,13 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/vladislavprovich/url-shortener/internal/middleware"
 	"github.com/vladislavprovich/url-shortener/internal/repository"
 	"github.com/vladislavprovich/url-shortener/internal/repository/postgres"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/vladislavprovich/url-shortener/internal/handler"
 	"github.com/vladislavprovich/url-shortener/pkg/logger"
 	"go.uber.org/zap"
@@ -44,17 +41,7 @@ func main() {
 	repo := initRepo(db)
 	service := initService(&repo, logger)
 	urlHandler := initHandler(service, logger, cfg.Server)
-
-	r := chi.NewRouter()
-	r.Use(chiMiddleware.Logger)
-	r.Use(middleware.Recoverer(logger))
-	r.Use(middleware.RequestLogger(logger))
-	r.Use(middleware.CORS)
-	r.Use(middleware.RateLimiter(cfg.Server.RateLimit))
-
-	r.Post("/shorten", urlHandler.ShortenURL)
-	r.Get("/{shortURL}", urlHandler.Redirect)
-	r.Get("/{shortURL}/stats", urlHandler.GetStats)
+	r := handler.InitRouter(urlHandler, logger, cfg.Server)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
