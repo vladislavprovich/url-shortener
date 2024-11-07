@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/go-chi/httprate"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/httprate"
 )
 
 const defaultRateLimit = 100

@@ -3,11 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/vladislavprovich/url-shortener/internal/middleware"
-	"github.com/vladislavprovich/url-shortener/internal/repository"
-	"github.com/vladislavprovich/url-shortener/internal/repository/postgres"
-	"github.com/vladislavprovich/url-shortener/internal/service"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/vladislavprovich/url-shortener/internal/repository"
+	"github.com/vladislavprovich/url-shortener/internal/repository/postgres"
+	"github.com/vladislavprovich/url-shortener/internal/service"
+
 	"github.com/vladislavprovich/url-shortener/internal/handler"
 	"github.com/vladislavprovich/url-shortener/pkg/logger"
 	"go.uber.org/zap"
@@ -36,32 +34,21 @@ func main() {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 	defer func() {
-
-		if err := db.Close(); err != nil {
+		if err = db.Close(); err != nil {
 			logger.Warn("Error closing db", zap.Error(err))
 		}
 	}()
 	repo := initRepo(db)
 	service := initService(&repo, logger)
 	urlHandler := initHandler(service, logger, cfg.Server)
-
-	r := chi.NewRouter()
-	r.Use(chiMiddleware.Logger)
-	r.Use(middleware.Recoverer(logger))
-	r.Use(middleware.RequestLogger(logger))
-	r.Use(middleware.CORS)
-	r.Use(middleware.RateLimiter(cfg.Server.RateLimit))
-
-	r.Post("/shorten", urlHandler.ShortenURL)
-	r.Get("/{shortURL}", urlHandler.Redirect)
-	r.Get("/{shortURL}/stats", urlHandler.GetStats)
+	r := handler.InitRouter(urlHandler, logger, cfg.Server)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      r,
 		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
 		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		IdleTimeout:  time.Minute,
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -69,7 +56,7 @@ func main() {
 
 	go func() {
 		logger.Info("Server is starting", zap.String("port", cfg.Server.Port))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server error", zap.Error(err))
 		}
 	}()
@@ -80,7 +67,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err = srv.Shutdown(ctx); err != nil {
 		logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 

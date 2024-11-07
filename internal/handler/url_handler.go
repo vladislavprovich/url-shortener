@@ -3,13 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
 	"github.com/vladislavprovich/url-shortener/internal/models"
 	"github.com/vladislavprovich/url-shortener/internal/service"
 	"github.com/vladislavprovich/url-shortener/internal/validator"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type URLHandler struct {
@@ -93,5 +94,7 @@ func (h *URLHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	if err = json.NewEncoder(w).Encode(stats); err != nil {
+		h.logger.Error("handler, failed to write response", zap.Error(err))
+	}
 }

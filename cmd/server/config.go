@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/vladislavprovich/url-shortener/internal/handler"
@@ -13,7 +14,6 @@ type Config struct {
 	Server   handler.Config
 	Database postgres.Config
 	Logger   LoggerConfig
-	// Add other configs as needed
 }
 
 type LoggerConfig struct {
@@ -36,7 +36,6 @@ func (c *Config) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&c.Server),
 		validation.Field(&c.Database),
 		validation.Field(&c.Logger),
-		// Add other configs as needed
 	)
 }
 

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/google/uuid"
 	"github.com/vladislavprovich/url-shortener/internal/models"
@@ -33,11 +34,15 @@ func NewURLService(repo repository.URLRepository, logger *zap.Logger) URLService
 	}
 }
 
+func isValidAlias(alias *string) bool {
+	return alias != nil && *alias != ""
+}
+
 func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenRequest) (string, error) {
 	s.logger.Info("service.CreateShortURL", zap.String("original_url", req.URL))
 
 	var shortURL string
-	if req.CustomAlias != nil && *req.CustomAlias != "" {
+	if isValidAlias(req.CustomAlias) {
 		s.logger.Info("service, custom alias provided", zap.String("custom_alias", *req.CustomAlias))
 		_, err := s.repo.GetURL(ctx, *req.CustomAlias)
 		if err == nil {
@@ -73,7 +78,7 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 	err := s.repo.SaveURL(ctx, url)
 	if err != nil {
 		s.logger.Error("service, failed to save URL", zap.Error(err))
-		return "", fmt.Errorf("create short url, get url err: %s", err)
+		return "", fmt.Errorf("create short url, get url err: %w", err)
 	}
 
 	s.logger.Info("service, short URL created successfully", zap.String("short_url", shortURL))
@@ -82,18 +87,18 @@ func (s *urlService) CreateShortURL(ctx context.Context, req models.ShortenReque
 
 func (s *urlService) GetOriginalURL(ctx context.Context, shortURL string) (string, error) {
 	s.logger.Info("service.GetOriginalURL", zap.String("short_url", shortURL))
-	originalUrl, err := s.repo.GetURL(ctx, shortURL)
+	originalURL, err := s.repo.GetURL(ctx, shortURL)
 	if err != nil {
 		s.logger.Info("service, failed to get original URL", zap.String("short_url", shortURL))
-		return "", fmt.Errorf("get short url, get url err:, %s", err)
+		return "", fmt.Errorf("get short url, get url err:, %w", err)
 	}
 
-	if originalUrl.ExpiredAt != nil && time.Now().After(*originalUrl.ExpiredAt) {
+	if originalURL.ExpiredAt != nil && time.Now().After(*originalURL.ExpiredAt) {
 		s.logger.Info("service, storage time has expired, URL has expired", zap.String("short_url", shortURL))
 		return "", errors.New("URL has expired")
 	}
-	s.logger.Info("service, origin URL retrieved successfully", zap.String("original_url", originalUrl.OriginalURL))
-	return originalUrl.OriginalURL, nil
+	s.logger.Info("service, origin URL retrieved successfully", zap.String("original_url", originalURL.OriginalURL))
+	return originalURL.OriginalURL, nil
 }
 
 func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string) error {
@@ -105,7 +110,9 @@ func (s *urlService) LogRedirect(ctx context.Context, shortURL, referrer string)
 	} else {
 		s.logger.Info("Referrer is empty, not assigning to referrerPtr")
 	}
-	s.logger.Info("Saving RedirectLog to repository", zap.String("short_url", shortURL), zap.Time("accessed_at", time.Now()))
+	s.logger.Info("Saving RedirectLog to repository",
+		zap.String("short_url", shortURL),
+		zap.Time("accessed_at", time.Now()))
 	log := models.RedirectLog{
 		ID:         uuid.New().String(),
 		ShortURL:   shortURL,

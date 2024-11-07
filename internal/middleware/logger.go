@@ -23,7 +23,7 @@ func RequestLogger(logger *zap.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// Helper function to get status code from ResponseWriter
+// Helper function to get status code from ResponseWriter.
 func getStatusCode(w http.ResponseWriter) int {
 	if rw, ok := w.(interface{ Status() int }); ok {
 		return rw.Status()
