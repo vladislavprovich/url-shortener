@@ -38,9 +38,38 @@ cd url-shortener
 ## Configuration
 In docker-compose:
 ```bash
-DB_DRIVER=postgres
-DATABASE_URL=postgres://user:password@localhost:5432/shortener_db
-SERVER_PORT=8080
-RATE_LIMIT=10
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/urlshortener?sslmode=disable
+      - SERVER_PORT=8080
+      - LOG_LEVEL=development
+      - RATE_LIMIT=100
+      - BASE_URL=http://localhost:8080
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: urlshortener
+    volumes:
+      # first my local dir, second default for everyone
+      #- D:/Base/Downloads/example_db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+volumes:
+  db-data:
 ```
 You need to compile the database and api
