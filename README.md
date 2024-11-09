@@ -75,7 +75,7 @@ You need to compile the database and api
 
 ### API Endpoints
 
-Input data:
+Input data:  
   OriginalURL
   CustomURL (6 characters)
 
