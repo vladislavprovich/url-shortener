@@ -75,13 +75,11 @@ volumes:
 You need to compile the database and api
 
 ## API Endpoints
-
 -POST /shorten - Shorten a new URL.
--- Body: JSON with the original URL, e.g., { "url": "https://example.com" }
--- Response: JSON with the short code.
 -GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
 -GET /{shortCode}/stats - Retrieves usage statistics for a specific short URL.
 
 ## Usage
-Once the service is running, you can use it via HTTP requests.
+Once the service is running, you can use it via HTTP requests. 
+It is better to use postman for testing
 ![image](https://github.com/user-attachments/assets/abdebdab-60f2-47c8-b1a8-158c707e57ea)
