@@ -34,6 +34,7 @@ git clone https://github.com/yourusername/url-shortener.git
 cd url-shortener
 ```
 ## Configuration
+The project can be run in docker, all variables are registered there.
 In docker-compose:
 ```bash
 version: '3.8'
@@ -73,6 +74,8 @@ volumes:
 You need to compile the database and api
 
 ## API Endpoints
+-Input data
+- 
 - POST /shorten - Shorten a new URL.
 - GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
 - GET /{shortCode}/stats - Retrieves usage statistics for a specific short URL.
