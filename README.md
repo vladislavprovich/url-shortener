@@ -36,9 +36,11 @@ git clone https://github.com/yourusername/url-shortener.git
 cd url-shortener
 ```
 ## Configuration
-Clone the repository:
+In docker-compose:
 ```bash
 DB_DRIVER=postgres
 DATABASE_URL=postgres://user:password@localhost:5432/shortener_db
 SERVER_PORT=8080
 RATE_LIMIT=10
+```
+You need to compile the database and api
