@@ -81,13 +81,13 @@ You need to compile the database and api
 Once the service is running, you can use it via HTTP requests. 
 It is better to use postman for testing.
 - Examples of requests:
-- POST (200 ok) request.
+- POST request.
 
 ![image](https://github.com/user-attachments/assets/abdebdab-60f2-47c8-b1a8-158c707e57ea)
-- GET status (200 ok) request.
+- GET status request.
   
 ![image](https://github.com/user-attachments/assets/bbc98577-d836-42b4-a96b-7ade290554f5)
-- GET (200 ok) Redirects to the original URL associated with.
+- GET Redirects to the original URL associated with.
   
 ![image](https://github.com/user-attachments/assets/6325179d-556b-4ca2-a06c-50af2c049434)
 
