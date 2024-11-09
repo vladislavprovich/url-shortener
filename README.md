@@ -75,9 +75,9 @@ volumes:
 You need to compile the database and api
 
 ## API Endpoints
--POST /shorten - Shorten a new URL.
--GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
--GET /{shortCode}/stats - Retrieves usage statistics for a specific short URL.
+- POST /shorten - Shorten a new URL.
+- GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
+- GET /{shortCode}/stats - Retrieves usage statistics for a specific short URL.
 
 ## Usage
 Once the service is running, you can use it via HTTP requests. 
