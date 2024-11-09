@@ -73,8 +73,9 @@ volumes:
 ```
 You need to compile the database and api
 
-## API Endpoints
--Input data
+### API Endpoints
+
+Input data:
 - 
 - POST /shorten - Shorten a new URL.
 - GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
