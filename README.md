@@ -12,8 +12,6 @@ A simple URL shortener service built with Go. This service allows users to short
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 - Shorten long URLs into unique short codes
@@ -92,5 +90,4 @@ It is better to use postman for testing.
 - GET (200 ok) Redirects to the original URL associated with.
   
 ![image](https://github.com/user-attachments/assets/6325179d-556b-4ca2-a06c-50af2c049434)
-
 
