@@ -34,3 +34,11 @@ Clone the repository:
 ```bash
 git clone https://github.com/yourusername/url-shortener.git
 cd url-shortener
+```
+## Configuration
+Clone the repository:
+```bash
+DB_DRIVER=postgres
+DATABASE_URL=postgres://user:password@localhost:5432/shortener_db
+SERVER_PORT=8080
+RATE_LIMIT=10
