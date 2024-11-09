@@ -73,3 +73,7 @@ volumes:
   db-data:
 ```
 You need to compile the database and api
+
+## Usage
+Once the service is running, you can use it via HTTP requests.
+![image](https://github.com/user-attachments/assets/abdebdab-60f2-47c8-b1a8-158c707e57ea)
