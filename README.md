@@ -73,6 +73,7 @@ volumes:
   db-data:
 ```
 You need to compile the database and api
+```
 ##API Endpoints
 -POST /shorten - Shorten a new URL.
 -- Body: JSON with the original URL, e.g., { "url": "https://example.com" }
