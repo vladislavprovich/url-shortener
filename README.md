@@ -34,6 +34,7 @@ git clone https://github.com/yourusername/url-shortener.git
 cd url-shortener
 ```
 ## Configuration
+The project can be run in docker, all variables are registered there.
 In docker-compose:
 ```bash
 version: '3.8'
@@ -73,6 +74,13 @@ volumes:
 You need to compile the database and api
 
 ## API Endpoints
+
+#### Input data:  
+- OriginalURL  
+- CustomURL (6 characters)  
+#### Output data:  
+- ShortURL  
+#### Endpoints  
 - POST /shorten - Shorten a new URL.
 - GET /{shortCode} - Redirects to the original URL associated with {shortCode}.
 - GET /{shortCode}/stats - Retrieves usage statistics for a specific short URL.
@@ -81,13 +89,13 @@ You need to compile the database and api
 Once the service is running, you can use it via HTTP requests. 
 It is better to use postman for testing.
 - Examples of requests:
-- POST (200 ok) request.
+- POST request.
 
 ![image](https://github.com/user-attachments/assets/abdebdab-60f2-47c8-b1a8-158c707e57ea)
-- GET status (200 ok) request.
+- GET status request.
   
 ![image](https://github.com/user-attachments/assets/bbc98577-d836-42b4-a96b-7ade290554f5)
-- GET (200 ok) Redirects to the original URL associated with.
+- GET Redirects to the original URL associated with.
   
 ![image](https://github.com/user-attachments/assets/6325179d-556b-4ca2-a06c-50af2c049434)
 
